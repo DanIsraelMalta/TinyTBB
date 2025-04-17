@@ -49,7 +49,7 @@ TinyTBB::for_loop(A, [&](auto low, auto high) {
 });
 ```
 
-accumulate first half of vector elements in parallel manner using parallel for-loop syntax:
+accumulate first half of vector elements in parallel manner using parallel for-loop syntax with defined indices:
 ```cpp
 std::int32_t sum{};
 TinyTBB::for_loop(TinyTBB::IndexRange<std::size_t>{0, A.size() / 2},
@@ -60,24 +60,24 @@ TinyTBB::for_loop(TinyTBB::IndexRange<std::size_t>{0, A.size() / 2},
                   });
 ```
 
-accumulate first half of vector elements in parallel manner, without explicitly vectoriztion, using reduction operation:
+accumulate first half of vector elements in parallel manner, without explicitly vectoriztion, using reduction operation with defined range:
 ```cpp
 const std::int32_t sum = TinyTBB::reduce(TinyTBB::Range{ A.begin(), A.begin() + A.size() / 2u }, variadic_sum<>());
 ```
 
 launch asynchronously background task and get its future:
 ```cpp
-auto some_heavy_computation = [](double x) -> double {
+auto heavy_task = [](double x) -> double {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     return x + 32;
 };
-auto future = TinyTBB::task_with_future(some_heavy_computation, 10);
+auto heavy_task_future = TinyTBB::task_with_future(heavy_task, 10);
 
 ...
 // few seconds later...
 ...
 
 
-const double result = future.get();
+const double result = heavy_task_future.get();
 assert(result == 42);
 ```
