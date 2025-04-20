@@ -499,14 +499,14 @@ namespace TinyTBB {
                     std::array<T, STEP> partial_results;
                     details::static_for<0, 1, STEP>([&](std::size_t j) {
                         partial_results[j] = static_cast<T>(*(low + j));
-                        });
+                    });
                     It it{ low + STEP };
 
                     for (; it < high - STEP; it += STEP) {
                         details::static_for<0, 1, STEP>(
                             [&, it](std::size_t j) {
                                 partial_results[j] = op(partial_results[j], static_cast<T>(*(it + j)));
-                            });
+                        });
                     }
 
                     // reduction of remaining elements
