@@ -5,7 +5,7 @@ Notice - tested with GCC/CLANG and requires c++20.
 
 ## Usage example:
 
-define global parameters
+calculate sum of vector elements in parallel in various ways:
 ```cpp
 #include "TinyTBB.h"
 #include <assert.h>
@@ -25,50 +25,44 @@ constexpr std::size_t step{ 4 };
 
 // define amount of used threads
 TinyTBB::set_thread_count(thread_count);
-```
 
-fill a vector:
-```cpp
+// fill vector:
 std::vector<std::int32_t> A;
 A.reserve(N);
 for (std::size_t i{}; i < N; ++i) {
     A.emplace_back(i);
 }
-```
 
-accumulate vector elements in parallel manner, with internal operations explicitly vectorized, using reduction operation:
-```cpp
-const std::int32_t sum = TinyTBB::reduce<step>(A, variadic_sum<>{});
-```
+// accumulate vector elements in parallel manner, with internal operations explicitly vectorized, using reduction operation:
+const std::int32_t sum1{ TinyTBB::reduce<step>(A, variadic_sum<>{}) };
 
-accumulate vector elements in parallel manner using parallel for-loop syntax:
-```cpp
-std::int32_t sum{};
+// accumulate vector elements in parallel manner using parallel for-loop syntax:
+std::int32_t sum2{};
 TinyTBB::for_loop(A, [&](auto low, auto high) {
     for (auto it = low; it != high; ++it) {
-        sum += *it;
+        sum2 += *it;
     }
 });
-```
 
-accumulate first half of vector elements in parallel manner using parallel for-loop syntax with defined indices:
-```cpp
-std::int32_t sum{};
+// accumulate first half of vector elements in parallel manner using parallel for-loop syntax with defined indices:
+std::int32_t sum3{};
 TinyTBB::for_loop(TinyTBB::IndexRange<std::size_t>{0, A.size() / 2},
                   [&](auto low, auto high) {
                       for (auto i = low; i != high; ++i) {
-                          sum += A[i];
+                          sum3 += A[i];
                       }
                   });
+
+// accumulate first half of vector elements in parallel manner, without explicitly vectoriztion, using reduction operation with defined range:
+const std::int32_t sum4{ TinyTBB::reduce(TinyTBB::Range{ A.begin(), A.begin() + A.size() / 2u }, variadic_sum<>()) };
 ```
 
-accumulate first half of vector elements in parallel manner, without explicitly vectoriztion, using reduction operation with defined range:
+launch asynchronously task and get its future:
 ```cpp
-const std::int32_t sum = TinyTBB::reduce(TinyTBB::Range{ A.begin(), A.begin() + A.size() / 2u }, variadic_sum<>());
-```
+// define amount of used threads
+TinyTBB::set_thread_count(4);
 
-launch asynchronously background task and get its future:
-```cpp
+// define a heavy task and send it to thread pool
 auto heavy_task = [](double x) -> double {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     return x + 32;
@@ -79,7 +73,7 @@ auto heavy_task_future = TinyTBB::task_with_future(heavy_task, 10);
 // few seconds later...
 ...
 
-
+// get heavy task result
 const double result = heavy_task_future.get();
 assert(result == 42);
 ```
